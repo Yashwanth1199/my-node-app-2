@@ -1,21 +1,25 @@
 // server.js
-//importing required packages externally and from previously installed ones
+
+// Importing required packages
 const express = require('express');
 const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
+const XLSX = require('xlsx'); 
 const parser = require('./parser');
 const inserter = require('./inserter');
-const uploaderRouter = require('./uploader'); 
+const uploaderRouter = require('./uploader');
 
-//initialising our express server
 const app = express();
-const upload = multer({ dest: 'uploads/' }); //used for uploads
+const upload = multer({ dest: 'uploads/' }); // Used for file uploads
 
-app.use(express.static('public')); //static folder for frontend
-app.use('/', uploaderRouter); // Mount uploader routes
+// Serve static files (e.g., a frontend form)
+app.use(express.static('public'));
 
-// Upload Excel and convert to JSON
+// Mount custom uploader routes
+app.use('/', uploaderRouter);
+
+// ✅ Route: Upload and convert Excel only
 app.post('/upload-excel', upload.single('file'), (req, res) => {
   const tempPath = req.file.path;
   const targetPath = path.join(__dirname, 'converted file.json');
@@ -36,6 +40,7 @@ app.post('/upload-excel', upload.single('file'), (req, res) => {
   }
 });
 
+// ✅ Route: Upload raw file only
 app.post('/upload', upload.single('file'), (req, res) => {
   const tempPath = req.file.path;
   const targetPath = path.join(__dirname, 'converted file.json');
@@ -46,9 +51,10 @@ app.post('/upload', upload.single('file'), (req, res) => {
   });
 });
 
+// ✅ Route: Run JSON parsing logic (from uploaded JSON)
 app.post('/parse', (req, res) => {
   try {
-    parser();
+    parser(); // Converts `converted file.json` → `structured_traders.json`
     res.send('✅ JSON parsed successfully');
   } catch (err) {
     console.error(err);
@@ -56,11 +62,12 @@ app.post('/parse', (req, res) => {
   }
 });
 
+// ✅ Route: Insert parsed data into DB
 app.post('/insert', async (req, res) => {
   try {
     await inserter();
 
-    // ✅ Cleanup after successful insert
+    // ✅ Cleanup after insert
     ['converted file.json', 'structured_traders.json'].forEach((file) => {
       if (fs.existsSync(file)) {
         fs.unlinkSync(file);
@@ -75,6 +82,41 @@ app.post('/insert', async (req, res) => {
   }
 });
 
+// ✅ NEW: Upload + Parse + Insert in one go
+app.post('/upload-and-process', upload.single('file'), async (req, res) => {
+  const tempPath = req.file.path;
+  const targetPath = path.join(__dirname, 'converted file.json');
+
+  try {
+    // Convert Excel to JSON
+    const workbook = XLSX.readFile(tempPath);
+    const sheetName = workbook.SheetNames[0];
+    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    fs.writeFileSync(targetPath, JSON.stringify(data, null, 2));
+    fs.unlinkSync(tempPath);
+
+    // Parse structured data
+    parser();
+
+    // Insert into database
+    await inserter();
+
+    //Cleanup
+    ['converted file.json', 'structured_traders.json'].forEach((file) => {
+      if (fs.existsSync(file)) {
+        fs.unlinkSync(file);
+        console.log(`🗑️ Deleted temporary file: ${file}`);
+      }
+    });
+
+    res.send('✅ Upload, parse, and insert complete');
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('❌ Something failed during upload & process');
+  }
+});
+
+// ✅ Start server
 app.listen(3000, () => {
   console.log('🚀 Server running at http://localhost:3000');
 });
