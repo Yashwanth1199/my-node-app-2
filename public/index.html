@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Trade Data</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    <h1>Upload Data</h1>
+    <p>Upload your Excel (.xls or .xlsx) file containing required information. The system will process and save the data automatically into the database.</p>
+
+    <form id="uploadForm" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".xls,.xlsx" required />
+      <br>
+      <button type="submit">Upload and Save to Database</button>
+    </form>
+
+    <p id="status" class="status"></p>
+  </div>
+
+  <script>
+    const uploadForm = document.getElementById('uploadForm');
+    const statusEl = document.getElementById('status');
+
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = 'Processing...';
+      
+      const formData = new FormData(uploadForm);
+
+      try {
+        // Step 1: Upload Excel and convert to JSON
+        let res = await fetch('/upload-excel', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!res.ok) throw new Error('Excel upload failed');
+
+        // Step 2: Parse JSON
+        res = await fetch('/parse', { method: 'POST' });
+        if (!res.ok) throw new Error('Parsing failed');
+
+        // Step 3: Insert into DB
+        res = await fetch('/insert', { method: 'POST' });
+        if (!res.ok) throw new Error('Database insert failed');
+
+        statusEl.textContent = '✅ File processed and data inserted successfully!';
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = `❌ ${err.message}`;
+      }
+    });
+  </script>
+
+</body>
+</html>

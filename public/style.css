@@ -1,0 +1,43 @@
+body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f4f4f4;
+      padding: 2rem;
+      color: #333;
+    }
+
+    .container {
+      background: #fff;
+      max-width: 500px;
+      margin: auto;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    input[type="file"] {
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+    }
+
+    .status {
+      margin-top: 1rem;
+      font-weight: bold;
+    }
