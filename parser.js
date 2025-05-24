@@ -21,12 +21,15 @@ function parseJson() {
       };
       traders.push(currentTrader);
       expectLocationNext = true;
+      currentAgent = null; // reset agent when new trader begins
     } else if (expectLocationNext && typeof srNo === 'string') {
       if (currentTrader) {
         currentTrader.location = srNo.trim();
       }
       expectLocationNext = false;
-    } else if (srNo === 'Trader Total in Quintal') { //note that the columns can possibly change when the report arrives, need to ensure to change them manually
+    }else if (srNo === 'CA') {
+      currentAgent = entry['__EMPTY']?.trim(); // Read CA from row 
+    }else if (srNo === 'Trader Total in Quintal') { //note that the columns can possibly change when the report arrives, need to ensure to change them manually
       if (currentTrader) {
         currentTrader.summary = {
           totalBags: entry['__EMPTY_7'],
@@ -46,7 +49,7 @@ function parseJson() {
           quantity: entry['__EMPTY_10'],
           bidRate: entry['Bid Rate'],
           value: entry['Value'],
-          agent: entry['Commision Agent']
+          agent: entry['Commision Agent']?.trim() || currentAgent //either its the direct column value or it could be from a row - 
         });
       }
     }

@@ -20,6 +20,16 @@ async function insertToDB() {
   });
   console.log('✅ Connected to MySQL');
 
+  //current date
+  function getCurrentDateFormatted() {
+    const now = new Date();
+    const day = String(now.getDate()).padStart(2, '0');
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+    const year = now.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+
   for (const trader of tradersData) {
     const traderName = trader.trader_name?.trim();
 
@@ -30,30 +40,33 @@ async function insertToDB() {
 
     for (const lot of trader.lots) {
       try {
+        const currentDate = getCurrentDateFormatted();
+
         const [result] = await connection.execute(
           `INSERT INTO demo_table (
-            col2,
-            col3,
-            col4,
-            col5,
-            col6,
-            col7,
-            col8
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        col2,
+        col3,
+        col4,
+        col5,
+        col6,
+        col7,
+        col8
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
           [
+            lot.agent || null, //CA
             lot.lotId || null,
             lot.farmer || null,
             lot.produce || null,
-            traderName,
-            lot.bags,
-            parseQuantity(lot.quantity),
-            lot.bidRate || 0
+            currentDate, // ⬅️ Formatted as DD/MM/YYYY
+            lot.bidRate || 0,
+            traderName
           ]
         );
       } catch (error) {
         console.error(`❌ Failed to insert lot ${lot.lotId}:`, error.message);
       }
     }
+
   }
   //verification query
   const [rows] = await connection.execute('SELECT * FROM demo_table');
