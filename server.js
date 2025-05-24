@@ -102,12 +102,12 @@ app.post('/upload-and-process', upload.single('file'), async (req, res) => {
     await inserter();
 
     //Cleanup
-    ['converted file.json', 'structured_traders.json'].forEach((file) => {
+   /* ['converted file.json', 'structured_traders.json'].forEach((file) => {
       if (fs.existsSync(file)) {
         fs.unlinkSync(file);
         console.log(`🗑️ Deleted temporary file: ${file}`);
       }
-    });
+    // }); */
 
     res.send('✅ Upload, parse, and insert complete');
   } catch (error) {
