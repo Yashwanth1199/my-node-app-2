@@ -22,6 +22,14 @@ async function insertToDB(returnRows = false) {
 
   console.log('✅ Connected to MySQL');
 
+  //delete all the rows first - for testing 
+  // try {
+  //   const [result] = await connection.query('DELETE FROM demo_table');
+  //   console.log(`Deleted ${result.affectedRows} rows`);
+  // } catch (err) {
+  //   console.error('Error executing query:', err);
+  // } 
+
   let insertedCount = 0;
 
   for (const trader of tradersData) {
@@ -42,16 +50,16 @@ async function insertToDB(returnRows = false) {
       const date = getCurrentDateFormatted();
 
       // Debug: log what will be inserted
-      console.log(`📦 Inserting lot:`, {
-        traderName,
-        lotId,
-        farmer,
-        produce,
-        bags,
-        bidRate,
-        agent,
-        date
-      });
+      // console.log(`📦 Inserting lot:`, {
+      //   traderName,
+      //   lotId,
+      //   farmer,
+      //   produce,
+      //   bags,
+      //   bidRate,
+      //   agent,
+      //   date
+      // });
 
       // Skip clearly invalid entries
       if (!lotId || !farmer || !produce) {
@@ -86,10 +94,11 @@ async function insertToDB(returnRows = false) {
 
   let rows = [];
   if (returnRows) {
-    [rows] = await connection.execute(
-      'SELECT * FROM demo_table ORDER BY id DESC LIMIT 20'
-    );
-  }
+  [rows] = await connection.execute(
+    'SELECT * FROM demo_table ORDER  BY col6 DESC'
+  );
+  console.table(rows); // ✅ cleaner tabular output
+}
 
   await connection.end();
   return rows;

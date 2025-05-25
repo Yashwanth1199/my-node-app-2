@@ -10,13 +10,20 @@ const KEY = {
   bags:          ['No.of Bags', 'No. of Bags', '__EMPTY_7'],
   qty:           ['Qty', 'Quantity', '__EMPTY_10'],
   bidRate:       ['Bid Rate', 'Rate', '__EMPTY_12'],
-  value:         ['Value', '__EMPTY_14'],
-  traderName:    ['Tradername', 'Trader Name', '__EMPTY_17'],
+  value:         ['Value', '__EMPTY_14', '__EMPTY_7'],
+  traderName:    ['Tradername', 'Trader Name', '__EMPTY_17', '__EMPTY_8'],
   agent:         ['Commision Agent', 'Commission Agent', '__EMPTY_15'],
 };
 
+// 🔐 Utility: Get the first non-empty value from a list of keys
 function first(obj, list) {
   return list.map(k => obj[k]).find(v => v !== undefined && v !== null && v !== '');
+}
+
+// 🧼 Utility: Always safely trim
+function safeTrim(val) {
+  if (val === undefined || val === null) return '';
+  return String(val).trim();
 }
 
 function parseJson(pathIn = 'converted file.json', pathOut = 'structured_traders.json') {
@@ -30,41 +37,46 @@ function parseJson(pathIn = 'converted file.json', pathOut = 'structured_traders
   jsonArray.forEach(entry => {
     const srNo = first(entry, KEY.srNo);
 
-    /* ---- Detect “Trader Name:” header row --------------------------- */
+    // 🧾 Detect “Trader Name:” header row
     if (srNo === 'Trader Name:') {
-      currentTrader = first(entry, ['__EMPTY', 'Trader Name', KEY.traderName[0]])?.trim();
-      tradersMap.set(currentTrader, { trader_name: currentTrader, location: '', lots: [], summary: null });
-      expectLocationNext = true;
-      currentAgent = null;
+      currentTrader = safeTrim(first(entry, ['__EMPTY', 'Trader Name', KEY.traderName[0]]));
+      if (currentTrader) {
+        tradersMap.set(currentTrader, { trader_name: currentTrader, location: '', lots: [], summary: null });
+        expectLocationNext = true;
+        currentAgent = null;
+      }
       return;
     }
 
-    /* ---- Location row right after “Trader Name:” -------------------- */
+    // 🧾 Detect "CA:" block (commission agent row)
+    if (typeof srNo === 'string' && srNo.trim().startsWith('CA')) {
+      currentAgent = safeTrim(first(entry, ['Farmer_Name', '__EMPTY', '__EMPTY_1']));
+      return;
+    }
+
+    // 🧭 Location row right after “Trader Name:”
     if (expectLocationNext && typeof srNo === 'string') {
-      tradersMap.get(currentTrader).location = srNo.trim();
+      if (currentTrader && tradersMap.has(currentTrader)) {
+        tradersMap.get(currentTrader).location = safeTrim(srNo);
+      }
       expectLocationNext = false;
       return;
     }
 
-    /* ---- Commission-agent row (starts with “CA”) -------------------- */
-    if (typeof srNo === 'string' && srNo.trim().startsWith('CA')) {
-      currentAgent = first(entry, KEY.lotId)?.trim();   // agent’s name in Lot-ID column
-      return;
-    }
-
-    /* ---- Plain trader name column (winner-list style) --------------- */
-    const columnTrader = first(entry, KEY.traderName)?.trim();
+    // 🧾 Extract trader from fallback `__EMPTY_8` or other possible columns
+    const columnTrader = safeTrim(first(entry, [...KEY.traderName, '__EMPTY_8']));
     if (columnTrader && !tradersMap.has(columnTrader)) {
       tradersMap.set(columnTrader, { trader_name: columnTrader, location: '', lots: [], summary: null });
     }
 
-    /* ---- Skip rows that don’t start with a numeric Sr No. ----------- */
+    // 🔢 Skip non-numeric Sr No.
     if (typeof srNo !== 'number') return;
 
-    /* ---- Normal lot line ------------------------------------------- */
+    // 🎯 Determine final trader key
     const traderKey = currentTrader || columnTrader;
     if (!traderKey || !tradersMap.has(traderKey)) return;
 
+    // 📦 Assemble a lot entry
     const lot = {
       lotId:    first(entry, KEY.lotId),
       farmer:   first(entry, KEY.farmer),
@@ -80,7 +92,7 @@ function parseJson(pathIn = 'converted file.json', pathOut = 'structured_traders
 
     tradersMap.get(traderKey).lots.push(lot);
 
-    /* ---- Optional summary row (same pattern for both files) --------- */
+    // 📊 Optional summary row
     if (srNo === 'Trader Total in Quintal') {
       tradersMap.get(traderKey).summary = {
         totalBags:     first(entry, KEY.bags),

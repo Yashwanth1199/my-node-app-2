@@ -65,7 +65,7 @@ app.post('/parse', (req, res) => {
 // ✅ Route: Insert parsed data into DB
 app.post('/insert', async (req, res) => {
   try {
-    await inserter();
+    await inserter(true);
 
     // ✅ Cleanup after insert
     ['converted file.json', 'structured_traders.json'].forEach((file) => {
@@ -99,15 +99,15 @@ app.post('/upload-and-process', upload.single('file'), async (req, res) => {
     parser();
 
     // Insert into database
-    await inserter();
+    await inserter(true);
 
     //Cleanup
-   /* ['converted file.json', 'structured_traders.json'].forEach((file) => {
+    ['converted file.json', 'structured_traders.json'].forEach((file) => {
       if (fs.existsSync(file)) {
         fs.unlinkSync(file);
         console.log(`🗑️ Deleted temporary file: ${file}`);
       }
-    // }); */
+     });
 
     res.send('✅ Upload, parse, and insert complete');
   } catch (error) {
