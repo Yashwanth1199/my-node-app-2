@@ -24,29 +24,26 @@
     const uploadForm = document.getElementById('uploadForm');
     const statusEl = document.getElementById('status');
 
+    const urlParams = new URLSearchParams(window.location.search);
+    const tableName = urlParams.get('table');
+
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (!tableName) {
+        statusEl.textContent = '❌ No table name specified in URL (?table=your_table).';
+        return;
+      }
+
       statusEl.textContent = 'Processing...';
-      
       const formData = new FormData(uploadForm);
 
       try {
-        // Step 1: Upload Excel and convert to JSON
-        let res = await fetch('/upload-excel', {
+        const res = await fetch(`/upload-and-process?table=${encodeURIComponent(tableName)}`, {
           method: 'POST',
           body: formData
         });
 
-        if (!res.ok) throw new Error('Excel upload failed');
-
-        // Step 2: Parse JSON
-        res = await fetch('/parse', { method: 'POST' });
-        if (!res.ok) throw new Error('Parsing failed');
-
-        // Step 3: Insert into DB
-        res = await fetch('/insert', { method: 'POST' });
         if (!res.ok) throw new Error('Database insert failed');
-
         statusEl.textContent = '✅ File processed and data inserted successfully!';
       } catch (err) {
         console.error(err);

@@ -9,26 +9,38 @@ function getCurrentDateFormatted() {
   return `${day}/${month}/${year}`;
 }
 
-async function insertToDB(returnRows = false) {
-  const tradersData = JSON.parse(fs.readFileSync('structured_traders.json', 'utf8'));
+async function insertToDB(returnRows = false, tableName) {
+  if (!tableName) {
+    throw new Error('❌ Table name is required');
+  }
+  if (!/^[a-zA-Z0-9_]+$/.test(tableName)) {
+    throw new Error(`❌ Invalid table name: ${tableName}`);
+  }
 
-  const connection = await mysql.createConnection({
+  const tradersData = JSON.parse(fs.readFileSync('structured_traders.json', 'utf8'));
+let connection;
+
+try {
+  connection = await mysql.createConnection({
     host: '198.12.234.250',
     user: 'demo_username',
     password: 'demo_password',
     database: 'demo',
     port: 3306
   });
-
   console.log('✅ Connected to MySQL');
+} catch (err) {
+  console.error('❌ Failed to connect to MySQL:', err.message);
+  throw err; // this is important to make sure the route sends a failure
+}
 
   //delete all the rows first - for testing 
-  // try {
-  //   const [result] = await connection.query('DELETE FROM demo_table');
-  //   console.log(`Deleted ${result.affectedRows} rows`);
-  // } catch (err) {
-  //   console.error('Error executing query:', err);
-  // } 
+  try {
+    const [result] = await connection.query('DELETE FROM demo_table');
+    console.log(`Deleted ${result.affectedRows} rows`);
+  } catch (err) {
+    console.error('Error executing query:', err);
+  } 
 
   let insertedCount = 0;
 
@@ -67,21 +79,23 @@ async function insertToDB(returnRows = false) {
         continue;
       }
 
-      try {
-        const [result] = await connection.execute(
-          `INSERT INTO demo_table (
-            col2, col3, col4, col5, col6, col7, col8
-          ) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-          [
-            agent,        // col2 - CA
-            lotId,        // col3 - Lot ID
-            farmer,       // col4 - Farmer
-            produce,      // col5 - Produce
-            date,         // col6 - Date
-            bidRate,      // col7 - Bid Rate
-            traderName    // col8 - Trader Name
-          ]
-        );
+   try {
+        // Build SQL query dynamically using tableName
+        const sql = `
+          INSERT INTO \`${tableName}\` 
+          (col2, col3, col4, col5, col6, col7, col8) 
+          VALUES (?, ?, ?, ?, ?, ?, ?)`;
+
+        // Execute the SQL insert statement
+        const [result] = await connection.execute(sql, [
+          agent,        // col2 - CA
+          lotId,        // col3 - Lot ID
+          farmer,       // col4 - Farmer
+          produce,      // col5 - Produce
+          date,         // col6 - Date
+          bidRate,      // col7 - Bid Rate
+          traderName    // col8 - Trader Name
+        ]);
 
         insertedCount++;
       } catch (error) {
