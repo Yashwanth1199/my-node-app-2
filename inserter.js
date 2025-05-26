@@ -35,12 +35,12 @@ try {
 }
 
   //delete all the rows first - for testing 
-  try {
-    const [result] = await connection.query('DELETE FROM demo_table');
-    console.log(`Deleted ${result.affectedRows} rows`);
-  } catch (err) {
-    console.error('Error executing query:', err);
-  } 
+  // try {
+  //   const [result] = await connection.query('DELETE FROM demo_table');
+  //   console.log(`Deleted ${result.affectedRows} rows`);
+  // } catch (err) {
+  //   console.error('Error executing query:', err);
+  // } 
 
   let insertedCount = 0;
 
