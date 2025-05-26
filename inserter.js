@@ -22,25 +22,32 @@ let connection;
 
 try {
   connection = await mysql.createConnection({
-    host: '198.12.234.250',
-    user: 'demo_username',
-    password: 'demo_password',
-    database: 'demo',
+    host: 'tscreens.in',
+    user: 'amcdev',
+    password: 'AmcDev@11s',
+    database: 'tsamc',
     port: 3306
   });
+  // connection = await mysql.createConnection({
+  //   host: '198.12.234.250',
+  //   user: 'demo_username',
+  //   password: 'demo_password',
+  //   database: 'demo',
+  //   port: 3306
+  // });
   console.log('✅ Connected to MySQL');
 } catch (err) {
   console.error('❌ Failed to connect to MySQL:', err.message);
   throw err; // this is important to make sure the route sends a failure
 }
 
-  //delete all the rows first - for testing 
-  // try {
-  //   const [result] = await connection.query('DELETE FROM demo_table');
-  //   console.log(`Deleted ${result.affectedRows} rows`);
-  // } catch (err) {
-  //   console.error('Error executing query:', err);
-  // } 
+  //delete all the rows first  
+  try {
+    const [result] = await connection.query(`DELETE FROM \`${tableName}\``);
+    console.log(`Deleted ${result.affectedRows} rows`);
+  } catch (err) {
+    console.error('Error executing query:', err);
+  } 
 
   let insertedCount = 0;
 
@@ -109,7 +116,7 @@ try {
   let rows = [];
   if (returnRows) {
   [rows] = await connection.execute(
-    'SELECT * FROM demo_table ORDER  BY col6 DESC'
+    `SELECT * FROM \`${tableName}\` ORDER  BY col6 DESC`
   );
   console.table(rows); // ✅ cleaner tabular output
 }
