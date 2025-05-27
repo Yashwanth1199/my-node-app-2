@@ -2,23 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Upload Trade Data</title>
+  <title>E-NAM LED DATA UPLOAD</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
+  <div class="page-title">
+    E-NAM LED DATA UPLOAD
+  </div>
   <div class="container">
     <h1>Upload Data</h1>
-    <p>Upload your Excel (.xls or .xlsx) file containing required information. The system will process and save the data automatically into the database.</p>
+    <p>Please Upload CA wise WINNER LIST (.xls or .xlsx) format file here <br>
+       The system will process and save the data automatically.</p>
 
     <form id="uploadForm" enctype="multipart/form-data">
       <input type="file" name="file" accept=".xls,.xlsx" required />
       <br>
-      <button type="submit">Upload and Save to Database</button>
+      <button type="submit">Upload and Save</button>
     </form>
 
     <p id="status" class="status"></p>
   </div>
+
+  <footer>
+    For any issues contact: <b>+91 9949986207</b> (Suvidha Electronic Services, HYD)
+  </footer>
 
   <script>
     const uploadForm = document.getElementById('uploadForm');
@@ -34,7 +42,7 @@
         return;
       }
 
-      statusEl.textContent = 'Processing...';
+      statusEl.textContent = 'Wait for 15-20 minutes for processing';
       const formData = new FormData(uploadForm);
 
       try {
@@ -51,6 +59,5 @@
       }
     });
   </script>
-
 </body>
 </html>
